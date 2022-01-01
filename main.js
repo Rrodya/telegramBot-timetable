@@ -5,6 +5,8 @@ const TelegramApi = require('node-telegram-bot-api')
 const token = '5028959484:AAH1hYVCcpTkZMz2ONXHtce_c3SvKUMxhso';
 const bot = new TelegramApi(token, {polling: true});
 
+let correct = 0, upd = 0;
+
 
 
 function workBot(data){
@@ -66,15 +68,30 @@ function filterHtml(html) {
         }
     })
 
-    objData.infoArr = arrUrl;
-    workBot(arrUrl);
+    correct = arrUrl[arrUrl.length - 1].day;
+    
+    if(correct !== upd){
+        workBot(arrUrl);                    // сделать чтобы при вызови бота автоматически без команды отправлялась ссылка
+        upd = arrUrl[arrUrl.length - 1].day;
+
+    }
+    console.log(`{ correct: ${correct}\nupd: ${upd}}`);
     return arrUrl;
 }
 
 let objData = {};
-axios.get('https://www.uksivt.ru/zameny').then(async (html) => {
-    const filterResponse = await filterHtml(html);
+function sayHello(){
+    console.log('Hello');
+}
+getAxios();
 
-    return filterResponse;
-})
+setInterval(getAxios, 600000);   /*Условие по времени, чтобы например сет интервал работал только с 9:00 по 14:00*/
+
+function getAxios(){
+    axios.get('https://www.uksivt.ru/zameny').then(async (html) => {
+        
+        const filterResponse = await filterHtml(html);
+        return filterResponse;
+    })
+}
 
