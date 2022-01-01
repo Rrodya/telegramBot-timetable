@@ -4,12 +4,20 @@
   "description": "",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.24.0",
-    "cheerio": "^1.0.0-rc.10"
+    "cheerio": "^1.0.0-rc.10",
+    "googleapis": "^39.2.0",
+    "node-telegram-bot-api": "^0.56.0",
+    "nodemon": "^2.0.15",
+    "parse-google-docs-json": "^2.0.0"
+  },
+  "devDependencies": {
+    "gdoctableapp": "^1.1.0"
   }
 }
