@@ -1,18 +1,19 @@
-const cheerio = require('cheerio')
+const cheerio = require('cheerio');
 const axios = require('axios');
-const TelegramApi = require('node-telegram-bot-api')
+const TelegramApi = require('node-telegram-bot-api');
 
 const token = '5028959484:AAH1hYVCcpTkZMz2ONXHtce_c3SvKUMxhso';
 const bot = new TelegramApi(token, {polling: true});
 
+let chatId; 
 
-
+let checked = 0; // стетчик для if  в filterHtml для того чтобы только самый первый вызов workBot() запускал бота, остальные 
+                 // для отправки обновленных данных
 let correct = 0, upd = 0;
 
 
 
 function workBot(data){
-
 
     bot.setMyCommands([
         {command: '/start', description: 'Информация о боте'},
@@ -22,7 +23,7 @@ function workBot(data){
 
     bot.on('message', async msg => {
         const text = msg.text;
-        const chatId = msg.chat.id;
+        chatId = msg.chat.id;
         
         if(text === '/start'){
             await bot.sendSticker(chatId, 'https://tlgrm.eu/_/stickers/22c/b26/22cb267f-a2ab-41e4-8360-fe35ac048c3b/1.webp');
@@ -35,22 +36,18 @@ function workBot(data){
         if(text === '/lox'){
             await bot.sendMessage(chatId, 'Stas is lox');
         }
-        function sendTabletime(tableTime){
-            await bot.sendMessage(chatId, `Расписание: ${tableTime[tableTime.length - 1].url}`);
+        if(checked === 1){
+            sendTable(data);
+            checked++;
         }
     })
-    
-
-
 }
 
-
-
-let checked = 0; // стетчик для if  в filterHtml для того чтобы только самый первый вызов workBot() запускал бота, остальные 
-                 // для отправки обновленных данных
+function sendTable(tableTime){
+    bot.sendMessage(chatId, `Расписание на ${tableTime[tableTime.length - 1].day}: ${tableTime[tableTime.length - 1].url}`);
+}
 
 function filterHtml(html) {
- 
     const convertToObj = (day, url) => {
         if(day !== ''){
             return {
@@ -71,7 +68,7 @@ function filterHtml(html) {
         if(!index){
             $(item).attr("data-cal", `${months[date.getMonth()]}`);
             $(stTable).attr('data-cal', 'dec');
-
+    
             const links = $('table[data-cal] a[href^="https://docs.google.com/document/d/"]');
 
             links.each((i, item) => {
@@ -83,21 +80,25 @@ function filterHtml(html) {
     correct = arrUrl[arrUrl.length - 1].day;
     
     if(correct !== upd){
-        if(!checked){
-            workBot(arrUrl)
+        if(checked === 0){
             checked++;
+
+            workBot(arrUrl);  
+
+            upd = arrUrl[arrUrl.length - 1].day;
+
+            return arrUrl;
         }
-        sendTabletime(arrUrl);      // Task: сделать чтобы при вызови бота автоматически без команды отправлялась ссылка
+        sendTable(arrUrl);      // Task: сделать чтобы при вызови бота автоматически без команды отправлялась ссылка
         upd = arrUrl[arrUrl.length - 1].day;
 
     }
-    console.log(`{ correct: ${correct}\nupd: ${upd}}`);
     return arrUrl;
 }
 
 getAxios();
 
-setInterval(getAxios, 600000);   /* Task: Условие по времени, чтобы например сет интервал работал только с 9:00 по 14:00*/
+setInterval(getAxios, 15000);   /* Task: Условие по времени, чтобы например сет интервал работал только с 9:00 по 14:00*/
 
 function getAxios(){
     axios.get('https://www.uksivt.ru/zameny').then(async (html) => {
