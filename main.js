@@ -5,11 +5,14 @@ const TelegramApi = require('node-telegram-bot-api')
 const token = '5028959484:AAH1hYVCcpTkZMz2ONXHtce_c3SvKUMxhso';
 const bot = new TelegramApi(token, {polling: true});
 
+
+
 let correct = 0, upd = 0;
 
 
 
 function workBot(data){
+
 
     bot.setMyCommands([
         {command: '/start', description: 'Информация о боте'},
@@ -32,13 +35,22 @@ function workBot(data){
         if(text === '/lox'){
             await bot.sendMessage(chatId, 'Stas is lox');
         }
+        function sendTabletime(tableTime){
+            await bot.sendMessage(chatId, `Расписание: ${tableTime[tableTime.length - 1].url}`);
+        }
     })
+    
+
+
 }
 
 
 
+let checked = 0; // стетчик для if  в filterHtml для того чтобы только самый первый вызов workBot() запускал бота, остальные 
+                 // для отправки обновленных данных
 
 function filterHtml(html) {
+ 
     const convertToObj = (day, url) => {
         if(day !== ''){
             return {
@@ -71,7 +83,11 @@ function filterHtml(html) {
     correct = arrUrl[arrUrl.length - 1].day;
     
     if(correct !== upd){
-        workBot(arrUrl);                    // сделать чтобы при вызови бота автоматически без команды отправлялась ссылка
+        if(!checked){
+            workBot(arrUrl)
+            checked++;
+        }
+        sendTabletime(arrUrl);      // Task: сделать чтобы при вызови бота автоматически без команды отправлялась ссылка
         upd = arrUrl[arrUrl.length - 1].day;
 
     }
@@ -79,18 +95,14 @@ function filterHtml(html) {
     return arrUrl;
 }
 
-let objData = {};
-function sayHello(){
-    console.log('Hello');
-}
 getAxios();
 
-setInterval(getAxios, 600000);   /*Условие по времени, чтобы например сет интервал работал только с 9:00 по 14:00*/
+setInterval(getAxios, 600000);   /* Task: Условие по времени, чтобы например сет интервал работал только с 9:00 по 14:00*/
 
 function getAxios(){
     axios.get('https://www.uksivt.ru/zameny').then(async (html) => {
-        
         const filterResponse = await filterHtml(html);
+
         return filterResponse;
     })
 }
