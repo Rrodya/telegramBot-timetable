@@ -1,15 +1,53 @@
 const cheerio = require('cheerio');
 const axios = require('axios');
-const TelegramApi = require('node-telegram-bot-api');
 
+const TelegramApi = require('node-telegram-bot-api');
 const token = '5028959484:AAH1hYVCcpTkZMz2ONXHtce_c3SvKUMxhso';
 const bot = new TelegramApi(token, {polling: true});
+let chatId;
+let url = ''
+let otdelenie = '';
+const buttonsRaspisanie = {
+    reply_markup: JSON.stringify({
+        inline_keyboard: [
+            [{text: 'Отделение экономики и ЗИО', callback_data: 'zio'}],
+            [{text: 'Отделение права', callback_data: 'pravo'}],
+            [{text: 'Отделение информатики и программирования', callback_data: 'program'}],
+            [{text: 'Отделение вычислительной техники', callback_data: 'tech'}],
+            [{text: 'Общеобразовательное отделение', callback_data: 'perv'}],
+        ]
+    })
+}
 
-let chatId; 
+const urlOtdelenie = [
+    {
+        otdel: 'zio',
+        url: 'https://docs.google.com/spreadsheets/d/1y4E6WsZOvR12TytWM5MFffD7QDzZp2Nq/edit?usp=sharing&ouid=110468935385081609098&rtpof=true&sd=true'
+    },
+    {
+        otdel: 'pravo',
+        url: 'https://docs.google.com/spreadsheets/d/1Xr8BTeoWXRPJZ7jGKH5RvBenFe1vksEo/edit?usp=sharing&ouid=110468935385081609098&rtpof=true&sd=true'
+    },
+    {
+        otdel: 'program',
+        url: 'https://docs.google.com/spreadsheets/d/1Ofgk9p7lLHv4kradp30U5X04Li4f7hH8/edit?usp=sharing&ouid=110468935385081609098&rtpof=true&sd=true'
+    },
+    {
+        otdel: 'tech',
+        url: 'https://docs.google.com/spreadsheets/d/12UUTZFS7nwaJCe0GYhEDeZJQlJhWcSmu/edit?usp=sharing&ouid=110468935385081609098&rtpof=true&sd=true'
+    },
+    {
+        otdel: 'perv',
+        url: 'https://docs.google.com/spreadsheets/d/13LvjUBNhuhd3R9Mk7ChXzo6X_Vyj0MoC/edit?usp=sharing&ouid=110468935385081609098&rtpof=true&sd=true'
+    },
+]
 
-let checked = 0; // стетчик для if  в filterHtml для того чтобы только самый первый вызов workBot() запускал бота, остальные 
-                 // для отправки обновленных данных
-let correct = 0, upd = 0;
+
+// стетчик для if  в filterHtml для того чтобы только самый первый вызов workBot() запускал бота, остальные
+let checked = 0;
+// для отправки обновленных данных
+let correct = 0; upd = 0;
+
 
 
 
@@ -18,7 +56,7 @@ function workBot(data){
     bot.setMyCommands([
         {command: '/start', description: 'Информация о боте'},
         {command: '/zameny', description:'Показать замены'},
-        {command: '/lox', description:'Кто лох'}
+        {command: '/raspisanie', description:'Показать расписание'},
     ])
 
     bot.on('message', async msg => {
@@ -27,19 +65,36 @@ function workBot(data){
         
         if(text === '/start'){
             await bot.sendSticker(chatId, 'https://tlgrm.eu/_/stickers/22c/b26/22cb267f-a2ab-41e4-8360-fe35ac048c3b/1.webp');
-            await bot.sendMessage(chatId, 'Привет, здесь будут выкладывается замены расписания сразу после того как они загружаются на официальный сайт уксивта. Команда /zameny покажет замены в расписании на сегодня/завтра. Команда /lox скажет кто лох');
+            await bot.sendMessage(chatId, 'Привет, здесь будут выкладывается замены расписания сразу после того как они загружаются на официальный сайт уксивта. Команда /zameny покажет замены в расписании на сегодня/завтра. Команда /raspisanie покажет расписание');
         }
         if(text === '/zameny'){
             await bot.sendMessage(chatId, `Замены на сегодня: ${data[data.length - 1].url}`);
             // console.log(data[data.length - 1].day);
         } 
-        if(text === '/lox'){
-            await bot.sendMessage(chatId, 'Stas is lox');
+        if(text === '/raspisanie'){
+            // if(!otdelenie){
+                await bot.sendMessage(chatId, 'Выбери своё отделение ', buttonsRaspisanie);
+            // } else {
+            //     await bot.sendMessage(chatId, `Расписание: ${url}`, );
+            // }
         }
         if(checked === 1){
             sendTable(data);
             checked++;
         }
+    });
+
+    bot.on('callback_query', msg => {
+        chatId = msg.message.chat.id;
+        otdelenie = msg.data;
+
+        urlOtdelenie.forEach(item => {
+            if(item.otdel === otdelenie){
+                url = item.url
+            }
+        })
+
+        bot.sendMessage(chatId, `Расписание: ${url}`);
     })
 }
 
